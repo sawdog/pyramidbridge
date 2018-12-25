@@ -10,7 +10,7 @@ handlers:
          default_format:  "%%Y/%%m/%%d %%H:%%M:%%S"
 logging:
   name: pyramidbridge
-  level: INFO
+  level: DEBUG
 rethinkdb:
   host: rethinkdb
   port: 28015
@@ -20,5 +20,5 @@ rethinkdb:
       table: events
     subscribe:
       table: subscriptions
-  user: smartthings
-  password: sm@rt!3s
+  user: pyre
+  password: f1r3st0rm
