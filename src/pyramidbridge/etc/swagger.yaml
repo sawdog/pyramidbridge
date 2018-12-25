@@ -1,0 +1,345 @@
+openapi: '3.0.1'
+info:
+  description:  |
+    PyramidBridge API exposing the various services behind the bridge; these are configurable and the endpoints are discoverable.
+  version: '1.0.0'
+  title: Services Bridge API
+  contact:
+    email: andrew@sawdog.com
+  license:
+    name: MIT
+    url: https://mit-license.org/
+servers:
+  - url: http://{server}:{port}/api/v1
+    description: |
+      The url to access the API service
+    variables:
+      scheme:
+        description: |
+          The scheme or protocol for the API server
+        default: http
+      server:
+        description: |
+          The hostname of the API server string
+        default: sawdog.assuscomm.com
+      port:
+        description:  |
+          Port which the API listens on for requests
+        enum:
+          - '80'
+          - '443'
+          - '6543'
+        default: '6543'
+security: []
+tags:
+  - name: admins
+    description: Secured Admin-only calls
+  - name: developers
+    description: API calls for the general developer
+components:
+  parameters:
+    ServiceId:
+      name: serviceId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
+      description: The ID of the service to return.
+  responses:
+    400Error:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    401Error:
+      description: Authorization information is missing invalid.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    404Error:
+      description: Not Found error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    5XXError:
+      description: Unexpected error.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  schemas:
+    DeviceFunction:
+      type: array
+      items:
+        $ref: '#/components/schemas/DeviceGroup'
+    DeviceGroup:
+        type: array
+        items:
+          type: string
+    ServiceItem:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - createdDate
+        - developer
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        name:
+          type: string
+          example: rethinkDB
+        description:
+          type: string
+          example: rethink database
+        createdDate:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        developer:
+          $ref: '#/components/schemas/ServiceDeveloper'
+    ServiceDeveloper:
+      required:
+        - name
+        - homePage
+      properties:
+        name:
+          type: string
+          example: Sna-Foo Corp
+        homePage:
+          type: string
+          format: url
+          example:  https://www.snafu.com
+    EventItem:
+      type: object
+      required:
+        - created
+        - deviceId
+        - eventTime
+        - hubId
+        - name
+        - source
+        - stateChange
+        - type
+        - unit
+        - uuid
+        - value
+      properties:
+        created:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        deviceId:
+          type: string
+          format: uuid
+          example: "cf15a76b-8f4a-4746-9839-314e77c9acf6"
+        eventTime:
+          type: string
+          format: date-time
+          example: 2018-11-19T07:15:22.001Z
+        hubId:
+          type: string
+          nullable: true
+          format: uuid
+          example: "c52f54e9-4c9e-40f8-8987-bb6be5c93ec2"
+        name:
+          type: string
+          example: "Upstairs Back Porch - Lights"
+        source:
+          type: string
+          example: "DEVICE"
+        stateChange:
+          type: boolean
+          example: true
+        devicetype:
+          type: string
+          example: "switch"
+        unit:
+          type: string
+          nullable: true
+          example: '%'
+        uuid:
+          type: string
+          example: "c52f54e9-4c9e-40f8-8987-bb6be5c93ec2"
+        value:
+          type: string
+          example: "71"
+    SubscriptionItem:
+      type: object
+      required:
+        - callback
+        - created
+        - devices
+        - uuid
+      properties:
+        callback:
+          type: string
+          example: '192.168.1.33:39500'
+        created:
+          type: string
+          format: date-time
+          example: 'Fri Oct 12 2018 04:16:55 GMT+00:00'
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceFunction'
+  securitySchemes:
+    UserSecurity:
+      type: http
+      scheme: basic
+paths:
+  /services:
+    get:
+      tags:
+        - developers
+      summary: lists the available services abstracted behind the bridge
+      description: List the available services exposed by the bridge
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceItem'
+        400:
+          $ref: '#/components/responses/400Error'
+        404:
+          $ref: '#/components/responses/404Error'
+        default:
+          $ref: '#/components/responses/5XXError'
+  /services/{serviceId}:
+    get:
+      tags:
+        - developers
+      summary: Returns a service by ID.
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        200:
+          description: Return a bridged service object by id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 4
+                  name:
+                    type: string
+                    example: "rethinkDB"
+                  description:
+                    type: string
+                    example: "rethink database"
+                  createdDate:
+                    type: string
+                    format: date-time
+                    example: 2016-08-29T09:12:33.001Z
+                  servicedeveloper:
+                    $ref: '#/components/schemas/ServiceDeveloper'
+        400:
+          $ref: '#/components/responses/400Error'
+        404:
+          $ref: '#/components/responses/404Error'
+        default:
+          $ref: '#/components/responses/5XXError'
+  /smartthings:
+    get:
+      tags:
+        - developers
+      description: listCallables for the smartthigs service API
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceItem'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+        'default':
+          $ref: '#/components/responses/5XXError'
+  /smartthings/events:
+    get:
+      tags:
+        - developers
+      summary: lists the available smartthings events
+      description: List the smartthings events
+      parameters:
+        - name: start
+          in: query
+          description: |
+            start number of the items if paginating otherwise defaults to 0
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: limit
+          in: query
+          description: |
+            The batch size to limit the number of the items returned. The default in pagination is 50.
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventItem'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+        default:
+          $ref: '#/components/responses/5XXError'
+  /smartthings/subscription:
+    get:
+      tags:
+        - developers
+      summary: lists the active smartthings subscription
+      description: List the smartthings subscription
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionItem'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+        'default':
+          $ref: '#/components/responses/5XXError'
