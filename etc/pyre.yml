@@ -1,0 +1,24 @@
+package: pyramidbridge
+environment: dev
+handlers:
+     date:
+         arrow_format:  "YYYY/MM/DD"
+         default_format:  "YYYY/MM/DD"
+         query_format: "YYYY-MM-DD"
+     datetime:
+         arrow_format: "YYYY/MM/DD HH:mm:ss"
+         default_format:  "%%Y/%%m/%%d %%H:%%M:%%S"
+logging:
+  name: pyramidbridge
+  level: DEBUG
+rethinkdb:
+  host: rethinkdb
+  port: 28015
+  smartthings:
+    db: smartthings
+    events:
+      table: events
+    subscribe:
+      table: subscriptions
+  user: pyre
+  password: f1r3st0rm
